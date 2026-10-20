@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const EXT = path.join(HERE, '../extension')
-const STORE = '/tmp/nudge-xapp-store'
+const STORE = path.resolve('/tmp/nudge-xapp-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4792
 const B = `http://localhost:${PORT}`
 fs.rmSync(STORE, { recursive: true, force: true })

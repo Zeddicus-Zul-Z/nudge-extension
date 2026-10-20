@@ -13,7 +13,7 @@ import WebSocket from '../bridge/node_modules/ws/index.js'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const BRIDGE = path.join(HERE, '../bridge/bridge.mjs')
 const WATCHER = path.join(HERE, '../bridge/watch-nudges.mjs')
-const STORE = '/tmp/nudge-origin-store'
+const STORE = path.resolve('/tmp/nudge-origin-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4783
 const B = `http://127.0.0.1:${PORT}`
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const EXT = path.join(HERE, '../extension')
 const OUT = '/tmp/pin-design-review'
-const STORE = '/tmp/pin-design-store'
+const STORE = path.resolve('/tmp/pin-design-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 fs.rmSync(OUT, { recursive: true, force: true }); fs.mkdirSync(OUT, { recursive: true })
 fs.rmSync(STORE, { recursive: true, force: true })
 

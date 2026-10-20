@@ -31,7 +31,7 @@ const config = JSON.parse(preset[1])
 if (config.nativeAutostart !== false || config.developmentReload !== false) throw new Error('Suite A requires native-start and reload isolation')
 config.browser = 'chromium'
 fs.writeFileSync(platformPath, platformSource.replace(preset[0], `globalThis.__nudgePlatform = ${JSON.stringify(config)}\n`))
-const STORE = '/tmp/pin-e2e-store'
+const STORE = path.resolve('/tmp/pin-e2e-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 fs.rmSync(STORE, { recursive: true, force: true })
 
 // OWN side port — the live bridge on 4700 keeps serving the user untouched.

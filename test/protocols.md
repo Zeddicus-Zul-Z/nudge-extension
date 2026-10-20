@@ -180,8 +180,22 @@ separate installation gate, not proven by dragging this in-page toolbar.
   proves the wake mode travels watcher IDENTITY → roster → /.identity + WS snapshot +
   routes, defaults to pull when the flag is missing/invalid (no false auto-wake), and
   the real watcher carries `NUDGE_WAKE` through. Run after any change to the wake plumbing.
+- `node test/windows-host.mjs` — **Suite R (Windows install + lifecycle)**, side
+  ports 4861/4862, no browser, Windows only (skips elsewhere). From a copy of
+  the checkout under a path with spaces: native host install (registry
+  `--dry-run`), Chrome's `cmd.exe` launch emulated on the wrapper, bridge
+  survives the host and is revived, no console, watchers armed through the
+  installed command in Git Bash and PowerShell, orphan exit, SessionStart hook,
+  uninstall. Part of `test:ci`. Run after any native-host, installer, watcher
+  lifecycle or hook change.
+- `node test/windows-chrome.mjs` — **Suite S (Windows extension id)**, real
+  Chromium, Windows only: the id the installer derives equals the id Chromium
+  gives the unpacked extension, also from a path with spaces. Run after any
+  change to `bridge/extension-id.mjs`.
 - `npm run test:ci` — fast units, the runtime-neutral Bridge/Watcher/CLI/Hook
-  round trip and the idempotent Claude Code + Codex installer. Required in CI.
+  round trip, the idempotent installer (`setup-agent.sh`; on Windows
+  `setup-agent.mjs` from cmd, PowerShell and Git Bash, plus uninstall) and Suite
+  R. Required in CI on Linux and Windows.
 - `node test/latency-bench.mjs` — **Wake latency** (side port 4799): POST →
   watcher line, WS push vs fs fallback. Reference 2026-07-05: 2.1 ms vs 23.7 ms.
 - `node test/bridge-hardening.mjs` — **Bridge hardening** (side port 4799): corrupt-store
@@ -448,6 +462,40 @@ owner — so the mode has to travel to the extension. Own bridge on 4788, no bro
 | W4 | **Missing/invalid `wake` defaults to pull** regardless of Runtime or editor — never a false auto-wake | ✅ 2026-08-28 |
 | W5 | The **real** `watch-nudges.mjs` carries `NUDGE_WAKE=pull` end-to-end into the roster | ✅ 2026-07-21 |
 
+## Suite R — Windows install + lifecycle (windows-host.mjs)
+
+Windows finds the native host through the registry, starts it through
+`cmd.exe`, never re-parents an orphan, and gives a detached process a console
+window unless told otherwise. Each leg pins one of those differences. Runs
+from a throwaway copy of the checkout under `…\nudge win …\Nudge Checkout`,
+a throwaway home and store, side ports 4861 (host) and 4862 (hook). The
+registry is never written: the installer runs with `--dry-run` and the legs
+check the planned `reg` calls; Chrome's launch is emulated as
+`cmd.exe /d /s /c ""<wrapper>" chrome-extension://<id>/ --parent-window=0"`,
+hidden, with the native messaging pipe on stdio.
+
+| # | Guards | Last |
+|---|--------|------|
+| R1 | Install writes `native-host-wrapper.cmd` (`@echo off`, CRLF, pinned node, quoted paths) and the manifest (wrapper path, derived origin); plans both registry keys; reinstall is byte-identical; explicit id used, invalid id refused | ✅ 2026-10-19 (Windows 11) |
+| R2 | Chrome-style launch: first frame `{ok, bridge:'started', port}`, bridge up on the side port with the test store | ✅ 2026-10-19 |
+| R3 | A ping is answered `running`; stdout carries nothing but frames (an echo would corrupt the stream) | ✅ 2026-10-19 |
+| R4 | The host exits when the pipe closes; the detached bridge keeps serving | ✅ 2026-10-19 |
+| R5 | The detached bridge has no console (`conhost.exe` child count 0), so no window can appear | ✅ 2026-10-19 |
+| R6 | A killed bridge is revived by the next launch (new pid) | ✅ 2026-10-19 |
+| R7 | Git Bash (`push`, Claude Code identity) and PowerShell (`pull`, Codex identity) arm a watcher through the installed `groundworks-nudge`; a real nudge produces the wake line; `context` and `resolve` work through the same launcher | ✅ 2026-10-19 |
+| R8 | **The watcher exits by itself when its agent's shell dies.** Negative control: with the ancestry check disabled the orphan kept running (R8 timeout) | ✅ 2026-10-19 |
+| R9 | The SessionStart hook prints nothing, starts one console-less detached bridge, and a second run leaves it alone | ✅ 2026-10-19 |
+| R10 | Uninstall removes wrapper + manifest, plans removal of both keys, keeps the store | ✅ 2026-10-19 |
+
+Not covered here: the real registry write and real Chrome reading it. That is
+manual drill C9.
+
+## Suite S — Windows extension id (windows-chrome.mjs)
+
+| # | Guards | Last |
+|---|--------|------|
+| S1 | `deriveExtensionId` (UTF-16LE, upper-case drive) equals the id Chromium shows for the unpacked extension, from the repository path and from a path with spaces | ✅ 2026-10-19 (Chromium 149) |
+
 ## Suite L — Toolbar & popover UX (toolbar-ux.mjs)
 
 Locks in the toolbar/popover polish (2026-07-07) so a later refactor can't break
@@ -581,9 +629,9 @@ extension re-pointed to the dead port 4799 (no fetch can reach the live bridge).
 | Q2 | The restored mark snaps back onto its live element (highlight within 3px) | ✅ 2026-07-29 |
 | Q3 | An element rendered ~1s after load is found inside the retry window | ✅ 2026-07-29 |
 | Q4 | Element gone for good: text kept, anchor honestly reported ("element gone") | ✅ 2026-07-29 |
-| Q5 | Such a mark still SENDS (frozen context, queued offline, no crash) | ✅ 2026-07-29 |
+| Q5 | Such a mark still SENDS (frozen context, queued offline, no crash) | ✅ 2026-07-29 · ✅ Windows 2026-10-19 after the wait became a poll (Chrome on Windows reports a refused localhost connection after ~2.4 s) |
 | Q6 | Escape before the reload leaves nothing to restore (no zombie draft) | ✅ 2026-07-29 |
-| Q7 | A Shift-collected set of elements survives the reload | ✅ 2026-07-29 |
+| Q7 | A Shift-collected set of elements survives the reload | ✅ 2026-07-29 · ❌ Windows 2026-10-19: the composer closes while the prompt is typed (textarea holds "swa"); same with the extension of 0.31.1, open |
 | Q8 | Real extension-storage quota failure preserves a sendable draft after quota recovery and reload | ✅ 2026-09-17 |
 | Q9 | Lost queue acknowledgement replays the same submission after reload without a duplicate | ✅ 2026-09-17 |
 | Q10 | Malformed page-console events cannot leave Send disabled or prevent queue submission | ✅ 2026-09-17 |
@@ -628,6 +676,7 @@ accrue in `amendments`. `POST /comments/:id/amend {text}`.
 | C6 | **Overlay perf** on a heavy TipTap doc: no hover lag (fastPath), glide stays smooth | after picker changes | ⬜ |
 | C7 | **Foreign-project Agent**: install the global adapter, invoke `groundworks-nudge`, then prove a prompt round trip outside this repository | after wiring changes | ⬜ (neutral CLI + installer automated ✅ 2026-08-28) |
 | C8 | **Real-Chrome self-heal**: kill bridge with only the user's Chrome running → circle red → green again without any agent/terminal | after native-host changes | ⬜ (Chromium-automated ✅ = B5) |
+| C9 | **Windows, real Chrome**: `node bridge\install-native-host.mjs` writes the HKCU keys → open `localhost:4700/demo` with no bridge running → the toolbar turns amber without a terminal and no console window flashes; stop the bridge → it comes back; then `/groundworks-nudge` in T3 Code on another project → green → a prompt round trip | after Windows installer or native-host changes | ⬜ (emulated ✅ = Suite R) |
 
 ## Removed (2026-07-05 architecture pass)
 
@@ -642,6 +691,18 @@ accrue in `amendments`. `POST /comments/:id/amend {text}`.
   native host owns the lifecycle. Re-add a drill only if multi-bridge returns.
 
 ## Run log
+
+- **2026-10-19 — Windows support (on 0.31.1 · Bridge 0.17.0), first runs on
+  Windows 11 with Chromium 149: `test:ci` green; Suites R 10/10 and S 1/1
+  NEW; A · D (D13 skipped: no LAN IP) · G · H · K · L · M · N · O · P · W ·
+  X · Y · Z and bridge-hardening all green.** Q 6/7: Q5 assumed an instant
+  connection refusal (Chrome on Windows needs ~2.4 s, now polled); Q7 fails
+  identically with the unchanged 0.31.1 extension and stays open. F and I not
+  run: `python3` is the Microsoft Store stub on stock Windows. Findings fixed
+  on the way: the CLI's dynamic `import()` of a `C:\…` path threw (needs a
+  file URL); suites compared a literal `/tmp/…` store with the bridge's
+  resolved `C:\tmp\…`; a watcher behind `cmd.exe`/`bash` shims never noticed
+  its agent dying (Windows does not re-parent, R8).
 
 - **2026-07-31 — Toolbar always fully visible (0.24.2): Suite L 7/7 (L7 NEW),
   plus M · Q · Y · A all green.** The bug came in as a screenshot: DevTools

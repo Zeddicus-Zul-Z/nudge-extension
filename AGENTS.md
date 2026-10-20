@@ -47,7 +47,8 @@ and full test map: [CONTRIBUTING.md](CONTRIBUTING.md).
 ### Never
 
 - Bundler, TypeScript, or a framework in `extension/`. Load unpacked.
-- Commit `bridge/native-host-wrapper.sh` (generated per machine).
+- Commit `bridge/native-host-wrapper.sh`, `bridge/native-host-wrapper.cmd` or
+  `bridge/dev.groundworks.nudge.json` (generated per machine).
 - A second agent constitution (`CLAUDE.md` is a pointer here; do not add
   Cursor rules or a parallel instruction file).
 - Annotation tool, cloud, accounts, or framework adapters (see VISION).

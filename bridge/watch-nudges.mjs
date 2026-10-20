@@ -10,6 +10,7 @@ import path from 'node:path'
 import { execSync } from 'node:child_process'
 import WebSocket from 'ws' // resolves via bridge/node_modules (this file lives in bridge/)
 import { discoverPreviews, previewHost } from '../agent/preview-hosts.mjs'
+import { isAlive, windowsAncestors } from './ancestry.mjs'
 import {
   resolveAgentId,
   resolveAgentRuntime,
@@ -127,14 +128,19 @@ if (!MY_SESSION) {
 }
 const LABEL = process.env.NUDGE_AGENT_LABEL
 function gitBranch() {
-  try { return execSync('git branch --show-current', { cwd: process.cwd(), stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || null } catch { return null }
+  // windowsHide: a watcher started by an agent without a console must not
+  // flash one for git
+  try { return execSync('git branch --show-current', { cwd: process.cwd(), stdio: ['ignore', 'pipe', 'ignore'], windowsHide: true }).toString().trim() || null } catch { return null }
 }
+// Claude Code names a project's transcript folder after its cwd with every
+// non-alphanumeric character turned into '-' (C:\a\.b -> C--a--b). Replacing
+// only '/' found no transcript on Windows or for any path with a dot.
+const claudeProjectDir = () => path.join(os.homedir(), '.claude', 'projects', process.cwd().replace(/[^a-zA-Z0-9]/g, '-'))
 function firstMessage() {
   try {
     const sid = process.env.CLAUDE_CODE_SESSION_ID
     if (!sid) return null
-    const slug = process.cwd().replace(/\//g, '-')
-    const f = path.join(os.homedir(), '.claude', 'projects', slug, `${sid}.jsonl`)
+    const f = path.join(claudeProjectDir(), `${sid}.jsonl`)
     const fd = fs.openSync(f, 'r')
     const buf = Buffer.alloc(262144)
     const n = fs.readSync(fd, buf, 0, buf.length, 0)
@@ -178,14 +184,19 @@ let isOwner = null // unknown until the first reply
 // Lifecycle (the user's rule: inactive sessions get KILLED, stale names must vanish).
 // Three tripwires, checked every 5 s / per heartbeat:
 // 1) orphaned — the session process died, we got re-parented to launchd: exit
+//    (Windows: an ancestor up to the agent is gone, see ancestry.mjs)
 // 2) replaced — the SAME session armed a newer watcher (bridge tells us): exit
 // 3) abandoned — standby AND the session transcript idle > 60 min: exit
 //    (the OWNER never idle-exits: it is the chosen wake channel)
 const TRANSCRIPT = process.env.CLAUDE_CODE_SESSION_ID
-  ? path.join(process.env.HOME || '', '.claude', 'projects', process.cwd().replace(/\//g, '-'), `${process.env.CLAUDE_CODE_SESSION_ID}.jsonl`)
+  ? path.join(claudeProjectDir(), `${process.env.CLAUDE_CODE_SESSION_ID}.jsonl`)
   : null
+const WINDOWS = process.platform === 'win32'
+let ancestors = WINDOWS ? [{ pid: process.ppid }] : [] // direct parent until the chain is known
+if (WINDOWS) windowsAncestors().then((list) => { if (list.length) ancestors = list })
 setInterval(() => {
-  if (process.ppid === 1) process.exit(0) // orphan
+  if (!WINDOWS && process.ppid === 1) process.exit(0) // orphan
+  if (ancestors.some((a) => !isAlive(a.pid))) process.exit(0) // Windows orphan
   if (isOwner === false && TRANSCRIPT) {
     try { if (Date.now() - fs.statSync(TRANSCRIPT).mtimeMs > 60 * 60_000) process.exit(0) } catch { /* keep running */ }
   }

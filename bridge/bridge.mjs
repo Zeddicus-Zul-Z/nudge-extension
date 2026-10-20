@@ -91,7 +91,10 @@ function handle(req, res) {
     const pickAlive = (h) => { const k = chosenByHost.get(h) || chosenByHost.get('*'); return !!k && fresh.some(a => agentKey(a) === k) }
     const tabHosts = [...new Set([...wss.clients].map(c => hostOf(c.meta?.url || '')).filter(Boolean))]
     const routes = tabHosts.map(h => { const o = ownerForHost(h); const claimed = !!o?.hosts?.includes(h); return { host: h, owner: o ? { label: o.label, session: o.session, wake: o.wake } : null, viaFallback: !pickAlive(h) && !claimed, via: pickAlive(h) ? 'selection' : claimed ? 'worktree' : 'fallback' } })
-    return json(res, 200, { app: 'groundworks-nudge', version: VERSION, capabilities: { sourceBoundEvidence: 1, submissionIdempotency: 1, lifecycleIdentity: 1 }, workspace: path.dirname(store.STORE_DIR), store: store.STORE_DIR, agentLive: !!gOwner, agentLabel: gOwner?.label || null, agentWake: gOwner?.wake || null, agents: agentsForClient(qHost), owners: [...chosenByHost], routes, tabs: [...wss.clients].map(c => c.meta).filter(Boolean) })
+    // pid (additive): a bridge started DETACHED (native host, session hook) has
+    // no handle anywhere; this lets a test stop exactly the bridge on its own
+    // side port instead of hunting by process name
+    return json(res, 200, { app: 'groundworks-nudge', version: VERSION, pid: process.pid, capabilities: { sourceBoundEvidence: 1, submissionIdempotency: 1, lifecycleIdentity: 1 }, workspace: path.dirname(store.STORE_DIR), store: store.STORE_DIR, agentLive: !!gOwner, agentLabel: gOwner?.label || null, agentWake: gOwner?.wake || null, agents: agentsForClient(qHost), owners: [...chosenByHost], routes, tabs: [...wss.clients].map(c => c.meta).filter(Boolean) })
   }
   // Agent heartbeat: a live watcher (watch-nudges.mjs) checks in every ~2 s. This is
   // what lets the extension show the HONEST green ("a prompt gets acted on now")

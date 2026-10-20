@@ -2,7 +2,7 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   resolveAgentId,
   resolveAgentRuntime,
@@ -196,7 +196,9 @@ const { options, positionals } = parseArgs(rawArgs)
 if (command === 'help' || command === '--help' || command === '-h') {
   usage()
 } else if (command === 'bridge') {
-  await import(path.join(ROOT, 'bridge', 'bridge.mjs'))
+  // a file URL, not a path: on Windows `import('C:\\…')` reads the drive letter
+  // as a URL scheme and throws (2026-10-19, first Windows run)
+  await import(pathToFileURL(path.join(ROOT, 'bridge', 'bridge.mjs')).href)
 } else if (command === 'ensure-bridge') {
   const result = await ensureBridge({ port: PORT, store: resolveStoreDir(), bridge: path.join(ROOT, 'bridge', 'bridge.mjs') })
   print({ state: result.state, bridge: result.identity })
@@ -222,7 +224,7 @@ if (command === 'help' || command === '--help' || command === '-h') {
     surface: process.env.NUDGE_AGENT_SURFACE,
     wake: process.env.NUDGE_WAKE === 'push' ? 'push' : 'pull',
   })
-  await import(path.join(ROOT, 'bridge', 'watch-nudges.mjs'))
+  await import(pathToFileURL(path.join(ROOT, 'bridge', 'watch-nudges.mjs')).href)
 } else if (command === 'previews') {
   print(discoverPreviews({ cwd: options.project === undefined ? process.cwd() : String(options.project) }))
 } else if (command === 'status' && options.check !== undefined) {

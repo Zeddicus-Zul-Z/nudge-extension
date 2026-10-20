@@ -13,6 +13,8 @@ import { resolveStoreDir } from '../agent/runtime.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const BRIDGE = path.join(HERE, 'bridge.mjs')
+// NUDGE_PORT lets a test drive this launcher end to end on a side port; Chrome
+// never sets it, so the real host stays on 4700
 const PORT = Number(process.env.NUDGE_PORT || 4700)
 
 function send(obj) {

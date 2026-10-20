@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const EXT = process.env.NUDGE_EXT || path.join(HERE, '../extension')
-const STORE = '/tmp/nudge-amend-store'
+const STORE = path.resolve('/tmp/nudge-amend-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4788, PAGE = 5188
 fs.rmSync(STORE, { recursive: true, force: true })
 const B = `http://localhost:${PORT}`

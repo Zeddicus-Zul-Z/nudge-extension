@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(HERE, '../..') // repo root (worktree)
 const EXT = path.join(HERE, '../extension')
-const STORE = '/tmp/nudge-realapps-store'
+const STORE = path.resolve('/tmp/nudge-realapps-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 fs.rmSync(STORE, { recursive: true, force: true })
 
 // ---------- app servers: reuse if already on the side port, else spawn ----------

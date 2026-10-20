@@ -1,5 +1,7 @@
 node_modules/
 bridge/native-host-wrapper.sh
+bridge/native-host-wrapper.cmd
+bridge/dev.groundworks.nudge.json
 extension/version.txt
 *.log
 artifacts/safari/

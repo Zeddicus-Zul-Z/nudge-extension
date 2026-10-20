@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:runtime": "node runtime-neutral.mjs",
     "test:setup": "node setup-agent.mjs",
-    "test:ci": "npm test && npm run test:runtime && npm run test:setup"
+    "test:windows": "node windows-host.mjs",
+    "test:ci": "npm test && npm run test:runtime && npm run test:setup && npm run test:windows"
   },
   "dependencies": {
     "playwright": "^1.61.1"

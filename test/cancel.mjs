@@ -18,7 +18,7 @@ import WebSocket from '../bridge/node_modules/ws/wrapper.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const EXT = process.env.NUDGE_EXT || path.join(HERE, '../extension')
-const STORE = '/tmp/nudge-cancel-store'
+const STORE = path.resolve('/tmp/nudge-cancel-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4791, PAGE = Number(process.env.NUDGE_TEST_PAGE_PORT || 5191), PAGE_B = Number(process.env.NUDGE_TEST_SECOND_PAGE_PORT || 5192)
 fs.rmSync(STORE, { recursive: true, force: true })
 const B = `http://localhost:${PORT}`

@@ -8,7 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
-const STORE = '/tmp/nudge-bench-store'
+const STORE = path.resolve('/tmp/nudge-bench-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4799 // side port: never fights the live bridge / Chrome self-healing
 const N = 12
 

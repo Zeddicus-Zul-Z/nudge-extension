@@ -30,11 +30,16 @@ async function waitFor(test, message) {
   fail(message)
 }
 
-const bridge = spawn('node', [BRIDGE], { env: ENV, stdio: ['ignore', 'ignore', 'inherit'] })
+// process.execPath, not 'node': a version-manager shim on PATH would put a
+// second process between this test and the bridge (the pid check below)
+const bridge = spawn(process.execPath, [BRIDGE], { env: ENV, stdio: ['ignore', 'ignore', 'inherit'] })
 children.push(bridge)
 
 try {
   await waitFor(async () => (await (await fetch(`${BASE}/.identity`)).json()).store === STORE, 'bridge did not start')
+  const identity = await (await fetch(`${BASE}/.identity`)).json()
+  if (identity.pid !== bridge.pid) fail(`/.identity pid ${identity.pid} is not the bridge process ${bridge.pid}`)
+  pass('/.identity names the bridge process (additive pid field)')
 
   const watcher = spawn('node', [CLI, 'watch', '--label', 'Runtime parity', '--agent-id', AGENT_ID, '--runtime', 'Codex', '--surface', 'CLI', '--wake', 'pull'], {
     env: ENV,

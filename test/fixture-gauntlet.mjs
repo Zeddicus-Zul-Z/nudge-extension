@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const EXT = process.env.NUDGE_EXT || path.join(HERE, '../extension')
 const FIXTURES = path.join(HERE, 'fixtures')
-const STORE = '/tmp/nudge-gauntlet-store'
+const STORE = path.resolve('/tmp/nudge-gauntlet-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const TESTPORT = 4722
 const PAGEPORT = Number(process.env.NUDGE_TEST_PAGE_PORT || 5320)
 fs.rmSync(STORE, { recursive: true, force: true })

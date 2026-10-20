@@ -69,3 +69,23 @@ jobs:
           name: developer-preview-verification
           path: artifacts/safari/
           if-no-files-found: error
+  windows:
+    # The Windows gate: units, runtime-neutral CLI, agent setup and Suite R
+    # (native host install + lifecycle). Suite R skips itself elsewhere.
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            bridge/package-lock.json
+            test/package-lock.json
+      - run: npm ci
+        working-directory: bridge
+      - run: npm ci
+        working-directory: test
+      - run: npm run test:ci
+        working-directory: test

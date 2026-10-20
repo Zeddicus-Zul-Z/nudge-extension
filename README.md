@@ -100,7 +100,7 @@ Chrome / Safari tab              bridge (Node, port 4700)          agent session
 
 | | |
 |---|---|
-| OS | macOS or Linux. Windows is not supported yet (see [INSTALL.md](INSTALL.md)). |
+| OS | macOS, Linux or Windows 10/11 (Windows: see [INSTALL.md](INSTALL.md#windows)). |
 | Browser | Google Chrome/Chromium with Developer mode, or Safari 26+ on macOS (temporary developer preview). |
 | Node.js | 22 or newer. |
 | Agent | Claude Code, Codex, Zed, T3 Code, or any local agent that can run shell commands. Tested in the terminal, Zed and T3 Code. |
@@ -142,6 +142,9 @@ cd nudge-extension/bridge && npm ci && cd ..
    ```
    Zed and T3 Code have no separate plugin. They pick up the same user-level
    Skill from the CLI they drive.
+
+   **Windows:** run `.\install.cmd` instead of the `npm ci` and steps 2
+   and 3; see [INSTALL.md](INSTALL.md#windows).
 4. **Try it.** Open `http://localhost:4700/demo` in Chrome. In an agent session
    **on any project of yours**, invoke `/groundworks-nudge`, wait for the green
    dot, click **Pick**, click a card, type a prompt, press Enter.

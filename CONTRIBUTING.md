@@ -96,7 +96,12 @@ suites when you touch the extension or the bridge.
    node test/hook-optin.mjs        # Suite G
    node test/provenance.mjs        # Suite H
    node test/battletest.mjs        # Suite I (needs python3)
+   node test/windows-host.mjs      # Suite R: Windows install + lifecycle (also in test:ci)
+   node test/windows-chrome.mjs    # Suite S: Windows extension id vs Chromium
    ```
+   Suites R and S run on Windows only and skip themselves elsewhere. On
+   Windows, `python3` is often the Microsoft Store stub, so F and I need a
+   real Python 3 on `PATH` under that name.
    Suites E, B and J (`real-apps.mjs`, `live-drill.mjs`, `cross-app.mjs`)
    drive the maintainers' private apps and are not runnable from this
    repository alone.
@@ -166,9 +171,9 @@ so tests do not require running inside a coding-agent session.
 5. Fill in the PR template. CI must be green.
 
 Where to start: `test/scenarios.md` has a backlog of edge cases worth
-automating, and Windows support for the native host installer is open. The
-terminal, Zed and T3 Code are tested; reports from other agent surfaces still
-help. Good first issues are labelled `good first issue` when they exist.
+automating. The terminal, Zed and T3 Code are tested; reports from other agent
+surfaces still help. Good first issues are labelled `good first issue` when
+they exist.
 
 ## Reporting bugs and security issues
 

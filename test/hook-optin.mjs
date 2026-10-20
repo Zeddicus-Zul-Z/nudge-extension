@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const HOOK = path.join(HERE, '../agent/nudge-context.mjs')
 const BRIDGE = path.join(HERE, '../bridge/bridge.mjs')
-const STORE = '/tmp/nudge-hookgate-store'
+const STORE = path.resolve('/tmp/nudge-hookgate-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4797
 const fail = (m) => { console.error('FAIL:', m); process.exit(1) }
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))

@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const BRIDGE = path.join(HERE, '../bridge/bridge.mjs')
-const STORE = '/tmp/nudge-provenance-store'
+const STORE = path.resolve('/tmp/nudge-provenance-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4794
 const B = `http://127.0.0.1:${PORT}`
 const fail = (m) => { console.error('FAIL:', m); cleanup(); process.exit(1) }

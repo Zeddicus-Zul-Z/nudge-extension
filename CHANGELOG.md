@@ -9,6 +9,44 @@ The changelog is English throughout.
 
 ## Unreleased
 
+- **Windows support.** `node bridge\install-native-host.mjs` registers the
+  native host per user (`HKCU\…\NativeMessagingHosts`, Chrome and Chromium)
+  through a generated `.cmd` wrapper, so Chrome starts and revives the bridge
+  as on macOS. `node agent\setup-agent.mjs` installs the Skill, the hooks and
+  the `groundworks-nudge` command as launchers for cmd/PowerShell and Git
+  Bash. Both take `--uninstall`, which keeps the store. The macOS/Linux shell
+  installers are unchanged. INSTALL.md has the steps and a T3 Code walkthrough.
+- `install.cmd`: one-step Windows install from the cloned folder. It runs the
+  native host installer, `npm install` for the bridge and the agent setup,
+  stops at the first failure and prints the folder to load in Chrome.
+  `install.cmd --uninstall` reverses both installers (Suite R11).
+- Suite R (Windows install and lifecycle, part of `test:ci`; R11 covers
+  `install.cmd`) and Suite S (derived extension id = Chromium's id). CI runs
+  the `test:ci` gate on `windows-latest` as well.
+- `/.identity` reports the bridge `pid` (additive), so a test or a person can
+  stop exactly the bridge on a given port.
+- Fixed: the CLI could not start on Windows. `groundworks-nudge watch` and
+  `bridge` loaded their module from a `C:\…` path, which Node reads as a URL
+  scheme. They now import a file URL.
+- Fixed: on Windows a watcher outlived its agent. Windows never re-parents an
+  orphan, and the command runs behind `cmd.exe`/`bash` shims that wait for
+  it, so the old `ppid === 1` check never fired and the toolbar stayed green
+  for a dead session. The watcher records its shims and agent once and exits
+  when one of them is gone (Suite R8, with a negative control).
+- Fixed: Claude Code transcripts were not found for paths with dots or on
+  Windows. The watcher looked for the project folder with only `/` replaced;
+  Claude Code replaces every non-alphanumeric character. The first-message
+  label and the idle exit of standby watchers work there now.
+- Fixed: store writes retry briefly when Windows reports the file as busy (a
+  virus scanner or indexer holding it), instead of failing the request.
+- Fixed: the bridge spawn, the watcher's `git` call and the new Windows hook
+  never open a console window.
+- Test suites compare the store path the way the bridge reports it, so they
+  run on Windows; Suite Q5 polls for the offline chip because Chrome on
+  Windows reports a refused localhost connection after about 2.4 s.
+- Known limitation: on Windows, the "Bridge offline — queued" chip appears
+  about 2.4 s after a send while the bridge is down (Chrome's
+  connection-refused timing), not at once.
 - Add a pinned, project-local Archify installation and reproducible, source-linked
   architecture map of the shared Chrome/Safari core and local bridge.
 - Synchronize the toolbar test with label and viewport updates before grabbing

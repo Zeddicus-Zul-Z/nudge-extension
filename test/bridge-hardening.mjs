@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import WebSocket from '../bridge/node_modules/ws/index.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
-const STORE = '/tmp/nudge-hardening-store'
+const STORE = path.resolve('/tmp/nudge-hardening-store') // resolved, as the bridge reports it (drive-rooted on Windows)
 const PORT = 4799 // side port — never fights the live bridge
 const fail = (m) => { console.error('FAIL:', m); process.exit(1) }
 

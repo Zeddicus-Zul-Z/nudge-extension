@@ -67,13 +67,27 @@ function seqFloorFromInbox() {
     }, 0)
   } catch { return 0 }
 }
+// Windows refuses to replace a file that another process holds open without
+// delete sharing (a virus scanner, the indexer, an editor peeking at the
+// store) — EPERM/EBUSY for a few milliseconds. POSIX never fails here. Retry
+// briefly instead of losing the write; anything else, or a lock that does not
+// clear, still throws.
+const RENAME_RETRY = new Set(['EPERM', 'EBUSY', 'EACCES'])
+function renameOver(from, to) {
+  for (let attempt = 0; ; attempt++) {
+    try { return fs.renameSync(from, to) } catch (e) {
+      if (process.platform !== 'win32' || !RENAME_RETRY.has(e.code) || attempt >= 20) throw e
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10 + attempt * 5)
+    }
+  }
+}
 function persist() {
   try {
     fs.mkdirSync(STORE_DIR, { recursive: true })
     // atomic: write aside, then rename — a crash mid-write leaves the old store intact
     const tmp = STORE_FILE + '.tmp'
     fs.writeFileSync(tmp, JSON.stringify(cache, null, 2))
-    fs.renameSync(tmp, STORE_FILE)
+    renameOver(tmp, STORE_FILE)
     cacheMtime = fs.statSync(STORE_FILE).mtimeMs
   } catch (error) {
     // Mutators change the cache before committing. A failed rename must never
@@ -252,7 +266,7 @@ export function setSelection(payload) {
   }
   const selTmp = SELECTION_FILE + '.tmp'
   fs.writeFileSync(selTmp, JSON.stringify(sel, null, 2))
-  fs.renameSync(selTmp, SELECTION_FILE)
+  renameOver(selTmp, SELECTION_FILE)
   emit('selection', sel)
   return sel
 }

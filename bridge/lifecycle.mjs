@@ -51,7 +51,9 @@ export async function ensureBridge({ port = 4700, store, bridge, env = process.e
     if (!connectionRefused(error)) throw error
   }
   if (typeof bridge !== 'string' || !path.isAbsolute(bridge)) throw new Error('an absolute bridge entry point is required')
-  const child = spawnImpl(process.execPath, [bridge], { detached: true, stdio: 'ignore', env: { ...env, NUDGE_PORT: String(port), ...(store ? { NUDGE_STORE: store } : {}) } })
+  // Windows: detached = no console of its own; windowsHide keeps it that way
+  // if a future change gives the bridge one (no stray console window)
+  const child = spawnImpl(process.execPath, [bridge], { detached: true, stdio: 'ignore', windowsHide: true, env: { ...env, NUDGE_PORT: String(port), ...(store ? { NUDGE_STORE: store } : {}) } })
   let spawnError = null
   child.once('error', error => { spawnError = error })
   child.unref()

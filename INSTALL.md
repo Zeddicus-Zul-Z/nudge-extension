@@ -9,9 +9,9 @@ Circled regions also include a screenshot. When done, the agent reports back int
 
 ## Requirements
 
-- **macOS or Linux.** Windows is not supported yet: Chrome's native messaging
-  needs a registry entry there, and nobody has written that installer. A pull
-  request is welcome.
+- **macOS, Linux or Windows 10/11.** The steps below are for macOS and Linux;
+  Windows uses two Node installers instead of the shell scripts, see
+  [Windows](#windows).
 - **Google Chrome** (or Chromium), or **Safari 26+ on macOS** for the temporary
   developer preview. Both can use the same bridge at the same time.
 - **Node.js 22 or newer.** `node -v` must print a version.
@@ -186,6 +186,70 @@ add it by default; if `groundworks-nudge help` prints "command not found", add
 4. Click **Pick**, click one of the cards, type a short prompt, press Enter.
    A chip at the top right says **nudge_1 — agent working**. Done.
 
+## Windows
+
+Same pieces, same Chrome extension, same Skill. Only steps 3 and 4 differ:
+Chrome finds the native host through a per-user registry key on Windows, and
+the command is installed as small launchers instead of a symlink. Everything
+stays under your user account; no administrator rights are needed.
+
+You need [Git for Windows](https://git-scm.com/download/win) (Claude Code uses
+its Git Bash), Node.js 22+ and Chrome. Run the commands in PowerShell.
+
+1. Clone and install the bridge dependency:
+   ```powershell
+   git clone https://github.com/gstangl/nudge-extension.git
+   cd nudge-extension\bridge
+   npm install
+   cd ..
+   ```
+2. Load `nudge-extension\extension` in `chrome://extensions` (Developer mode →
+   **Load unpacked**), exactly as in step 2 above.
+3. Register the native host:
+   ```powershell
+   node bridge\install-native-host.mjs
+   ```
+   This writes `bridge\native-host-wrapper.cmd` and
+   `bridge\dev.groundworks.nudge.json` (both machine-specific, not tracked in
+   git) and points `HKCU\Software\Google\Chrome\NativeMessagingHosts\dev.groundworks.nudge`
+   (and the Chromium twin) at the manifest. Compare the printed extension id
+   with the card in `chrome://extensions`; if it differs, run
+   `node bridge\install-native-host.mjs <extension-id>`. Re-running is safe.
+   Chrome starts the bridge hidden: no console window appears.
+4. Set up the agent side:
+   ```powershell
+   node agent\setup-agent.mjs
+   ```
+   It installs the same Skill and hooks as `setup-agent.sh`, and the command
+   as `%USERPROFILE%\.local\bin\groundworks-nudge.cmd` (cmd and PowerShell) plus
+   `groundworks-nudge` (Git Bash). If that folder is not on your `PATH` yet,
+   the script prints the one PowerShell line that adds it. Then **restart
+   T3 Code, your terminals and other agent apps**, so they see the command.
+   Settings files that do not parse are left alone with a warning, never
+   overwritten. Pass `claude-code` or `codex` to set up just one runtime.
+5. Check: `groundworks-nudge help` prints the command list in a new terminal,
+   and `http://localhost:4700/demo` loads in Chrome.
+
+### Try it in T3 Code on Windows
+
+Use a **separate project**, not this repository.
+
+1. Start your app's dev server so it serves a `localhost` page (for example
+   `npm run dev` → `http://localhost:5173`) and open that page in Chrome. The
+   Nudge toolbar appears at the top right.
+2. In T3 Code, open a thread **on that project** and choose Claude Code or
+   Codex as the provider.
+3. Type `/groundworks-nudge` (or pick `groundworks-nudge` from `$`). The agent
+   runs `groundworks-nudge watch …` and reports the connection. The status dot
+   in Chrome turns **green** and shows the session's name.
+4. In Chrome, click **Pick**, click an element, type for example "more space
+   above this heading", press Enter.
+5. If the green dot carries a **Pull** tag, the prompt waits for your next
+   chat message: send a short message in the T3 Code thread ("go"). Without the
+   tag the agent picks it up by itself.
+6. The agent edits your code, resolves the Nudge, and a **✓ nudge_1 done**
+   chip appears in the page.
+
 ## Daily use
 
 | Action | How |
@@ -257,22 +321,25 @@ cd bridge && npm ci
 In Chrome, reload Groundworks Nudge in `chrome://extensions`. In Safari,
 [restage and reload its resource folder](docs/SAFARI.md#updates-and-removal).
 Preserve unsent work, then reload the localhost tab in each browser you use.
-Re-run `./agent/setup-agent.sh` from the repository root if the Skill or hooks
-changed (the changelog says so).
+Re-run `./agent/setup-agent.sh` (Windows: `node agent\setup-agent.mjs`) from
+the repository root if the Skill or hooks changed (the changelog says so).
 The bridge picks up new code the next time it starts. To restart it, first
 identify its listener with `lsof -nP -iTCP:4700 -sTCP:LISTEN` and verify its
 command is this checkout's `bridge/bridge.mjs` with `ps -p <pid> -o command=`.
-Stop only that verified bridge process, then run `groundworks-nudge ensure-bridge`
-and check the version with `groundworks-nudge status`. Never kill an unknown
-listener or delete the store. `ensure-bridge` alone does not replace an already
-healthy older bridge.
+On Windows, `groundworks-nudge status` reports the bridge `pid`; check it with
+`Get-Process -Id <pid>` in PowerShell. Stop only that verified bridge process,
+then run `groundworks-nudge ensure-bridge` and check the version with
+`groundworks-nudge status`. Never kill an unknown listener or delete the store.
+`ensure-bridge` alone does not replace an already healthy older bridge.
 
 ## If something is stuck
 
 1. **Dot stays red.** In Chrome, wait about ten seconds for native-host recovery;
    check that step 3 was run from the extension's folder and `node` is on your
-   `PATH`. In Safari, run `groundworks-nudge ensure-bridge` and check that the
-   staged resources use the shared bridge, not an isolated test port. See
+   `PATH`. On Windows, also check that the printed extension id matches the
+   card in `chrome://extensions`. In Safari, run `groundworks-nudge ensure-bridge`
+   and check that the staged resources use the shared bridge, not an isolated
+   test port. See
    [Safari setup troubleshooting](docs/SAFARI.md#use-with-your-actual-project-and-agent).
 2. **Dot stays amber.** No agent is armed. In the session that owns the page,
    type `/groundworks-nudge` again. In Zed or T3 Code this has to be a thread
@@ -306,3 +373,20 @@ healthy older bridge.
   `hooks` in `~/.claude/settings.json` and `~/.codex/hooks.json`.
 - Data: the store is `~/.nudge` (or `~/.claude/nudge` on installations older
   than August 2026).
+
+**Windows.** Two commands remove everything the installers added and keep
+your data:
+
+```powershell
+node bridge\install-native-host.mjs --uninstall
+node agent\setup-agent.mjs --uninstall
+```
+
+The first deletes both registry keys plus the generated wrapper and manifest.
+The second deletes the launchers in `%USERPROFILE%\.local\bin`, the
+`groundworks-nudge` Skill folders, the Nudge hook files and the two Nudge
+entries in `~/.claude/settings.json` and `~/.codex/hooks.json`; everything
+else in those files stays. Then remove the extension in `chrome://extensions`.
+The store `%USERPROFILE%\.nudge` (prompts and screenshots) is kept; delete
+it yourself if you want it gone. A `PATH` entry you added for `.local\bin` is
+yours too: other tools (Claude Code's installer, for one) use that folder.

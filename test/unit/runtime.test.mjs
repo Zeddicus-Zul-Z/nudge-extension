@@ -14,7 +14,8 @@ const tempHome = () => fs.mkdtempSync(path.join(os.tmpdir(), 'nudge-runtime-'))
 
 describe('runtime-neutral store', () => {
   it('uses the explicit store override first', () => {
-    expect(resolveStoreDir({ env: { NUDGE_STORE: '/tmp/nudge-explicit' }, home: '/unused' })).toBe('/tmp/nudge-explicit')
+    // path.resolve: on Windows '/tmp/x' is the current drive's C:\tmp\x
+    expect(resolveStoreDir({ env: { NUDGE_STORE: '/tmp/nudge-explicit' }, home: '/unused' })).toBe(path.resolve('/tmp/nudge-explicit'))
   })
 
   it('uses a neutral path for a fresh installation and preserves a legacy installation', () => {
