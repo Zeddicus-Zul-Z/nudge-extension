@@ -15,6 +15,7 @@
 // R8 the watcher exits when its agent's shell dies (Windows has no re-parenting)
 // R9 the SessionStart hook starts one hidden bridge, silently, and only once
 // R10 uninstall removes wrapper, manifest and both registry keys (planned)
+// R11 install.cmd runs all three steps from anywhere; --uninstall reverses them
 import { execFileSync, spawn } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -59,11 +60,13 @@ for (const dir of ['agent', 'bridge', 'extension']) {
     filter: (src) => !/native-host-wrapper\.|dev\.groundworks\.nudge\.json$/.test(path.basename(src)),
   })
 }
+fs.copyFileSync(path.join(REPO, 'install.cmd'), path.join(ROOT, 'install.cmd'))
 fs.mkdirSync(PROJECT, { recursive: true })
 const INSTALL = path.join(ROOT, 'bridge', 'install-native-host.mjs')
 const WRAPPER = path.join(ROOT, 'bridge', 'native-host-wrapper.cmd')
 const MANIFEST = path.join(ROOT, 'bridge', 'dev.groundworks.nudge.json')
 const install = (...args) => execFileSync(process.execPath, [INSTALL, '--dry-run', ...args], { env: ENV, encoding: 'utf8', windowsHide: true })
+const setupUninstall = () => execFileSync(process.execPath, [path.join(ROOT, 'agent', 'setup-agent.mjs'), '--uninstall'], { env: ENV, encoding: 'utf8', windowsHide: true })
 
 // Chrome's own launch: cmd.exe /d /s /c ""<host path>" <origin> --parent-window=0", hidden
 function launchHost(port) {
@@ -224,6 +227,21 @@ try {
   }
   if (!fs.existsSync(path.join(STORE, 'store.json'))) fail('R10: uninstall touched the store')
   pass('R10 uninstall removes wrapper, manifest and both registry keys (planned), keeps the store')
+
+  // ---------- R11 one-step install.cmd ----------
+  const runInstallCmd = (args) => execFileSync('cmd.exe', ['/d', '/s', '/c', `""${path.join(ROOT, 'install.cmd')}" ${args}"`],
+    { cwd: PROJECT, env: ENV, windowsVerbatimArguments: true, windowsHide: true, encoding: 'utf8' })
+  const launcher = path.join(BIN, 'groundworks-nudge.cmd')
+  setupUninstall()
+  if (fs.existsSync(launcher)) fail('R11: precondition — launcher still present before install.cmd')
+  const oneStep = runInstallCmd('--dry-run')
+  if (!fs.existsSync(WRAPPER) || !fs.existsSync(MANIFEST) || !fs.existsSync(launcher)) fail(`R11: install.cmd left out a piece\n${oneStep}`)
+  if (!oneStep.includes('[3/3]') || !oneStep.includes(path.join(ROOT, 'extension'))) fail(`R11: install.cmd did not finish or name the extension folder\n${oneStep}`)
+  if (!oneStep.includes('dry-run: reg add')) fail('R11: --dry-run did not reach the native host installer')
+  const oneStepOff = runInstallCmd('--uninstall --dry-run')
+  if (fs.existsSync(WRAPPER) || fs.existsSync(launcher)) fail(`R11: install.cmd --uninstall left the wrapper or launcher\n${oneStepOff}`)
+  if (!fs.existsSync(path.join(STORE, 'store.json'))) fail('R11: install.cmd --uninstall touched the store')
+  pass('R11 install.cmd runs all three steps from another directory (path with spaces); --uninstall reverses them, keeps the store')
 
   console.log('\nSuite R: ALL PASS')
 } catch (e) {

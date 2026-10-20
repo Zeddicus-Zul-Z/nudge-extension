@@ -196,6 +196,25 @@ stays under your user account; no administrator rights are needed.
 You need [Git for Windows](https://git-scm.com/download/win) (Claude Code uses
 its Git Bash), Node.js 22+ and Chrome. Run the commands in PowerShell.
 
+Clone into a folder you keep: the native host, the command and the hooks point
+into this checkout, and Chrome derives the extension id from its path. A
+temporary agent worktree breaks the install when it is cleaned up.
+
+**One step.** In the cloned folder:
+
+```powershell
+.\install.cmd
+```
+
+It runs steps 3, 1 and 4 below in that order, stops at the first failure and
+ends by printing the folder to load in Chrome. Then do step 2, compare the id
+on the card with the one printed by step 3, and continue with step 5.
+`.\install.cmd <extension-id>` passes a different id to step 3;
+`.\install.cmd --uninstall` reverses everything (see [Uninstall](#uninstall)).
+Re-running is safe; after a `git pull` it also updates the bridge dependency.
+
+**Step by step**, if you prefer to see each piece:
+
 1. Clone and install the bridge dependency:
    ```powershell
    git clone https://github.com/gstangl/nudge-extension.git
@@ -374,8 +393,8 @@ then run `groundworks-nudge ensure-bridge` and check the version with
 - Data: the store is `~/.nudge` (or `~/.claude/nudge` on installations older
   than August 2026).
 
-**Windows.** Two commands remove everything the installers added and keep
-your data:
+**Windows.** `.\install.cmd --uninstall` removes everything the installers
+added and keeps your data. It runs these two commands:
 
 ```powershell
 node bridge\install-native-host.mjs --uninstall

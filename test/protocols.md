@@ -186,7 +186,7 @@ separate installation gate, not proven by dragging this in-page toolbar.
   `--dry-run`), Chrome's `cmd.exe` launch emulated on the wrapper, bridge
   survives the host and is revived, no console, watchers armed through the
   installed command in Git Bash and PowerShell, orphan exit, SessionStart hook,
-  uninstall. Part of `test:ci`. Run after any native-host, installer, watcher
+  uninstall, and the one-step `install.cmd`. Part of `test:ci`. Run after any native-host, installer, watcher
   lifecycle or hook change.
 - `node test/windows-chrome.mjs` — **Suite S (Windows extension id)**, real
   Chromium, Windows only: the id the installer derives equals the id Chromium
@@ -486,6 +486,7 @@ hidden, with the native messaging pipe on stdio.
 | R8 | **The watcher exits by itself when its agent's shell dies.** Negative control: with the ancestry check disabled the orphan kept running (R8 timeout) | ✅ 2026-10-19 |
 | R9 | The SessionStart hook prints nothing, starts one console-less detached bridge, and a second run leaves it alone | ✅ 2026-10-19 |
 | R10 | Uninstall removes wrapper + manifest, plans removal of both keys, keeps the store | ✅ 2026-10-19 |
+| R11 | `install.cmd --dry-run`, started from another directory, runs all three steps (wrapper, manifest, launcher) and names the extension folder; `install.cmd --uninstall` removes them and keeps the store | ✅ 2026-10-20 |
 
 Not covered here: the real registry write and real Chrome reading it. That is
 manual drill C9.
@@ -676,7 +677,7 @@ accrue in `amendments`. `POST /comments/:id/amend {text}`.
 | C6 | **Overlay perf** on a heavy TipTap doc: no hover lag (fastPath), glide stays smooth | after picker changes | ⬜ |
 | C7 | **Foreign-project Agent**: install the global adapter, invoke `groundworks-nudge`, then prove a prompt round trip outside this repository | after wiring changes | ⬜ (neutral CLI + installer automated ✅ 2026-08-28) |
 | C8 | **Real-Chrome self-heal**: kill bridge with only the user's Chrome running → circle red → green again without any agent/terminal | after native-host changes | ⬜ (Chromium-automated ✅ = B5) |
-| C9 | **Windows, real Chrome**: `node bridge\install-native-host.mjs` writes the HKCU keys → open `localhost:4700/demo` with no bridge running → the toolbar turns amber without a terminal and no console window flashes; stop the bridge → it comes back; then `/groundworks-nudge` in T3 Code on another project → green → a prompt round trip | after Windows installer or native-host changes | ⬜ (emulated ✅ = Suite R) |
+| C9 | **Windows, real Chrome**: `.\install.cmd` (or `node bridge\install-native-host.mjs`) writes the HKCU keys → open `localhost:4700/demo` with no bridge running → the toolbar turns amber without a terminal and no console window flashes; stop the bridge → it comes back; then `/groundworks-nudge` in T3 Code on another project → green → a prompt round trip | after Windows installer or native-host changes | ⬜ (emulated ✅ = Suite R) |
 
 ## Removed (2026-07-05 architecture pass)
 
