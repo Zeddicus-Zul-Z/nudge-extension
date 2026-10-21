@@ -630,9 +630,9 @@ extension re-pointed to the dead port 4799 (no fetch can reach the live bridge).
 | Q2 | The restored mark snaps back onto its live element (highlight within 3px) | ✅ 2026-07-29 |
 | Q3 | An element rendered ~1s after load is found inside the retry window | ✅ 2026-07-29 |
 | Q4 | Element gone for good: text kept, anchor honestly reported ("element gone") | ✅ 2026-07-29 |
-| Q5 | Such a mark still SENDS (frozen context, queued offline, no crash) | ✅ 2026-07-29 · ✅ Windows 2026-10-19 after the wait became a poll (Chrome on Windows reports a refused localhost connection after ~2.4 s) |
+| Q5 | Such a mark still SENDS (frozen context, queued offline, no crash) | ✅ 2026-07-29 · ✅ Windows 2026-10-21: the wait is a poll and the durable receipt ("Saved in queue") counts as feedback (Chrome on Windows reports a refused localhost connection after ~2.4 s, longer than the 1 s acknowledgement window) |
 | Q6 | Escape before the reload leaves nothing to restore (no zombie draft) | ✅ 2026-07-29 |
-| Q7 | A Shift-collected set of elements survives the reload | ✅ 2026-07-29 · ❌ Windows 2026-10-19: the composer closes while the prompt is typed (textarea holds "swa"); same with the extension of 0.31.1, open |
+| Q7 | A Shift-collected set of elements survives the reload | ✅ 2026-07-29 · ✅ Windows 2026-10-21 on 1.0.0-beta.1 (failed on 0.31.1: the composer closed while the prompt was typed) |
 | Q8 | Real extension-storage quota failure preserves a sendable draft after quota recovery and reload | ✅ 2026-09-17 |
 | Q9 | Lost queue acknowledgement replays the same submission after reload without a duplicate | ✅ 2026-09-17 |
 | Q10 | Malformed page-console events cannot leave Send disabled or prevent queue submission | ✅ 2026-09-17 |
@@ -692,6 +692,14 @@ accrue in `amendments`. `POST /comments/:id/amend {text}`.
   native host owns the lifecycle. Re-add a drill only if multi-bridge returns.
 
 ## Run log
+
+- **2026-10-21 — Windows support rebased onto 1.0.0-beta.1 · Bridge 0.20.0,
+  Windows 11: `test:ci` green (248 units, runtime-neutral, setup, Suite R
+  11/11); S 2/2; Q 20/20 (Q7 passes on the beta extension).** Two fits:
+  the bridge now holds a writer lease per store, so R9's hook bridge uses its
+  own store and the Windows SessionStart hook goes through `ensure-bridge`
+  like the shell hook; Q5 accepts the durable receipt because the ~2.4 s
+  connection refusal on Windows outlasts the 1 s acknowledgement window.
 
 - **2026-10-19 — Windows support (on 0.31.1 · Bridge 0.17.0), first runs on
   Windows 11 with Chromium 149: `test:ci` green; Suites R 10/10 and S 1/1

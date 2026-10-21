@@ -133,13 +133,16 @@ try {
     p.on('pageerror', e => errs.push(String(e)))
     await p.evaluate(`${sr}.querySelector('.composer .send').click()`)
     await until(async () => !await open(), 5000, 'offline draft acknowledgement')
-    // poll, not a fixed wait: Chrome on Windows takes ~2.4 s to report a
-    // refused localhost connection (macOS: at once), and the chip follows it
+    // poll, not a fixed wait, and accept the durable receipt too: Chrome on
+    // Windows takes ~2.4 s to report a refused localhost connection (macOS: at
+    // once), longer than the 1 s acknowledgement window, so the chip there says
+    // "Saved in queue — delivery in progress" instead of "Bridge offline — queued"
     const feed = () => p.evaluate(`[...${sr}.querySelectorAll('.feed .feed-text')].map(n => n.textContent)`)
-    for (const t0 = Date.now(); Date.now() - t0 < 5000 && !(await feed()).some(t => /queued|offline/i.test(t));) await sleep(100)
+    const queued = t => /queue|offline/i.test(t)
+    for (const t0 = Date.now(); Date.now() - t0 < 5000 && !(await feed()).some(queued);) await sleep(100)
     const chips = await feed()
     if (errs.length) fail(`Q5: sending an anchor-less mark threw: ${errs[0]}`)
-    else if (!chips.some(t => /queued|offline/i.test(t))) fail(`Q5: no send feedback, chips=${JSON.stringify(chips)}`)
+    else if (!chips.some(queued)) fail(`Q5: no send feedback, chips=${JSON.stringify(chips)}`)
     else if (await open()) fail('Q5: the composer stayed open after the send')
     else pass('Q5 a mark whose element is gone still sends (queued offline, no crash)')
   }

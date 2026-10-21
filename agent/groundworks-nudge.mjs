@@ -196,8 +196,8 @@ const { options, positionals } = parseArgs(rawArgs)
 if (command === 'help' || command === '--help' || command === '-h') {
   usage()
 } else if (command === 'bridge') {
-  // a file URL, not a path: on Windows `import('C:\\…')` reads the drive letter
-  // as a URL scheme and throws (2026-10-19, first Windows run)
+  // a file URL, not a path: on Windows a dynamic import of a `C:\…` path reads
+  // the drive letter as a URL scheme and throws (2026-10-19, first Windows run)
   await import(pathToFileURL(path.join(ROOT, 'bridge', 'bridge.mjs')).href)
 } else if (command === 'ensure-bridge') {
   const result = await ensureBridge({ port: PORT, store: resolveStoreDir(), bridge: path.join(ROOT, 'bridge', 'bridge.mjs') })

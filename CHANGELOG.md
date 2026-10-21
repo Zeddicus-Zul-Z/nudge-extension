@@ -14,8 +14,10 @@ The changelog is English throughout.
   through a generated `.cmd` wrapper, so Chrome starts and revives the bridge
   as on macOS. `node agent\setup-agent.mjs` installs the Skill, the hooks and
   the `groundworks-nudge` command as launchers for cmd/PowerShell and Git
-  Bash. Both take `--uninstall`, which keeps the store. The macOS/Linux shell
-  installers are unchanged. INSTALL.md has the steps and a T3 Code walkthrough.
+  Bash. Both take `--uninstall`, which keeps the store. The Windows
+  SessionStart hook starts the bridge through `ensure-bridge`, the same
+  identity-checked path as the shell hook. The macOS/Linux shell installers
+  are unchanged. INSTALL.md has the steps and a T3 Code walkthrough.
 - `install.cmd`: one-step Windows install from the cloned folder. It runs the
   native host installer, `npm install` for the bridge and the agent setup,
   stops at the first failure and prints the folder to load in Chrome.
@@ -42,8 +44,9 @@ The changelog is English throughout.
 - Fixed: the bridge spawn, the watcher's `git` call and the new Windows hook
   never open a console window.
 - Test suites compare the store path the way the bridge reports it, so they
-  run on Windows; Suite Q5 polls for the offline chip because Chrome on
-  Windows reports a refused localhost connection after about 2.4 s.
+  run on Windows; Suite Q5 polls for the queued chip and accepts the durable
+  receipt because Chrome on Windows reports a refused localhost connection
+  after about 2.4 s, longer than the acknowledgement window.
 - Known limitation: on Windows, the "Bridge offline — queued" chip appears
   about 2.4 s after a send while the bridge is down (Chrome's
   connection-refused timing), not at once.

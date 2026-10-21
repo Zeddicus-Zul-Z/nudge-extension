@@ -211,7 +211,7 @@ function uninstall() {
     }
     const current = readJson(config)
     if (!current.ok) { console.error(`skipped: ${config} is not valid JSON; remove the Nudge hooks by hand`); continue }
-    if (writeJsonIfChanged(config, current.data, removeHooks(current.data))) report('Nudge hooks removed from', config)
+    if (writeJsonIfChanged(config, current.data, removeHooks(current.data))) report('Nudge hooks removed in', config)
   }
   const store = path.join(HOME, '.nudge')
   console.log('')

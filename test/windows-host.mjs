@@ -32,6 +32,8 @@ const ROOT = path.join(SCRATCH, 'Nudge Checkout')
 const HOME_DIR = path.join(SCRATCH, 'Test User')
 const PROJECT = path.join(SCRATCH, 'target app') // the project an agent would change
 const STORE = path.join(SCRATCH, 'store')
+// the bridge holds a writer lease per store, so the hook's bridge needs its own
+const HOOK_STORE = path.join(SCRATCH, 'hook store')
 const [HOST_PORT, HOOK_PORT] = [4861, 4862]
 const BIN = path.join(HOME_DIR, '.local', 'bin')
 const ENV = { ...process.env, HOME: HOME_DIR, USERPROFILE: HOME_DIR, NUDGE_STORE: STORE, NUDGE_NO_RELOAD: '1', PATH: `${BIN}${path.delimiter}${process.env.PATH}` }
@@ -208,10 +210,10 @@ try {
   // ---------- R9 SessionStart hook ----------
   const settings = JSON.parse(fs.readFileSync(path.join(HOME_DIR, '.claude', 'settings.json'), 'utf8'))
   const hook = settings.hooks.SessionStart.flatMap((g) => g.hooks).find((h) => h.command.includes('nudge-session-start.mjs')).command
-  const runHook = () => execFileSync('cmd.exe', ['/d', '/s', '/c', `"${hook}"`], { env: { ...ENV, NUDGE_PORT: String(HOOK_PORT) }, windowsVerbatimArguments: true, windowsHide: true, encoding: 'utf8' })
+  const runHook = () => execFileSync('cmd.exe', ['/d', '/s', '/c', `"${hook}"`], { env: { ...ENV, NUDGE_PORT: String(HOOK_PORT), NUDGE_STORE: HOOK_STORE }, windowsVerbatimArguments: true, windowsHide: true, encoding: 'utf8' })
   if (await up(HOOK_PORT)) fail(`side port ${HOOK_PORT} is busy`)
   if (runHook().trim()) fail('R9: the SessionStart hook printed something (it would become session context)')
-  const hooked = await until(async () => { const i = await up(HOOK_PORT); return i?.store === STORE && i }, 8000, 'bridge from the SessionStart hook')
+  const hooked = await until(async () => { const i = await up(HOOK_PORT); return i?.store === HOOK_STORE && i }, 8000, 'bridge from the SessionStart hook')
   owned.pids.add(hooked.pid)
   if (consoleChildren(hooked.pid) !== 0) fail('R9: the hook-started bridge has a console')
   runHook()

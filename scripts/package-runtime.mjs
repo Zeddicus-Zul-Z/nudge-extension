@@ -18,8 +18,12 @@ export const RUNTIME_FILES = Object.freeze([
   'LICENSE', 'INSTALL.md',
   'agent/groundworks-nudge.mjs', 'agent/status-check.mjs', 'agent/runtime.mjs', 'agent/nudge-context.mjs', 'agent/preview-hosts.mjs',
   'agent/nudge-session-start.sh', 'agent/NUDGE-SKILL.md', 'agent/setup-agent.sh',
+  // Windows: the Node installers, the portable session-start hook and the
+  // watcher's ancestry check (imported by watch-nudges.mjs on every platform)
+  'agent/nudge-session-start.mjs', 'agent/setup-agent.mjs',
   'bridge/bridge.mjs', 'bridge/store.mjs', 'bridge/images.mjs', 'bridge/watch-nudges.mjs',
   'bridge/lease.mjs', 'bridge/lifecycle.mjs', 'bridge/native-host.mjs', 'bridge/http-boundary.mjs',
+  'bridge/ancestry.mjs', 'bridge/extension-id.mjs', 'bridge/install-native-host.mjs',
   'bridge/demo.html', 'bridge/install-native-host.sh',
   'bridge/package.json', 'bridge/package-lock.json',
   'extension/manifest.json', 'extension/platform.js', 'extension/sw.js',
